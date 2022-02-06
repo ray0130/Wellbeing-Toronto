@@ -114,7 +114,7 @@ The scattered plots of home price and some selected variables are shown below in
 Also, please keep note that the data has been normalized using z-score to prevent any large value that will affect the readability and interpretation of the plots.
 
 ```{r warning=FALSE, fig.cap="Scattered Plot of Home Price vs other variables", message = FALSE, echo=FALSE}
-# home price vs mid century highrise population normalized
+# Produce ggplots
 t1 <- table11 %>% ggplot(aes(x=`Percent Mid-Century Highrise Population`, y=`Home Prices`)) + 
   geom_point()+
   geom_smooth(method='lm', color='blue')
@@ -127,6 +127,8 @@ t3 <- table11 %>% ggplot(aes(x=`Social Housing Units`, y=`Home Prices`)) +
 t4 <- table11 %>% ggplot(aes(x=`Social Housing Waiting List`, y=`Home Prices`)) + 
   geom_point()+
   geom_smooth(method='lm', color='blue')
+
+# Use grid arrange to make graphs pretty
 grid.arrange(t1, t2, t3, t4, ncol=2, nrow=2)
 ```
 
@@ -136,10 +138,13 @@ Furthermore, from the correlation coefficient shown below in Table 1 created usi
 
 
 ```{r warning=FALSE, fig.cap="Correlation of Home Price with other variables", message = FALSE, echo=FALSE}
+# Delete neighbourhood from temporary data
 table11_v <- table11%>%select(-`Neighbourhood`)
+# Produce correlation coefficient table
 corr <- round(cor(table11_v), 1)
-# head(corr)
+# Get only first row aka Home Price
 corr <- corr[1, ]
+# Produce Table using kableExtra
 as_tibble(cbind(nms = names(corr), t(corr)))%>%
   select(-`Home Prices`)%>%
   knitr::kable(col.names = c("",
@@ -158,6 +163,7 @@ as_tibble(cbind(nms = names(corr), t(corr)))%>%
 ```
 
 ```{r warning=FALSE, message = FALSE, echo=FALSE, , include=FALSE}
+# Find specific condition data points
 table11[which(table11$`Social Housing Units` < -0.5 & table11$`Home Prices` > 3 & table11$`Rent Bank Applicants` < -0.5), ]
 ```
 
