@@ -1,0 +1,188 @@
+---
+title: "The Effects of Social Housing on Housing Price"
+author: 
+  - Ray Wen
+thanks: "Code and data are available at: https://github.com/ray0130/Wellbeing-Toronto"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+abstract: "In light of the evergrowing housing price in Toronto, this report attempts to find information on housing price in each diffefent neighborhood. An analysis on the affects of housing price and the number of social housing was conducted. A negative correlation was found between housing price and social housing. However, there are several factors and notes to remain mindful of."
+output:
+  bookdown::pdf_document2
+toc:
+  FALSE
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE, warning=FALSE, message = FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Set seed for reproducibility
+set.seed(1234)
+library(tidyverse)
+library(opendatatoronto)
+library(dplyr)
+library(ggcorrplot)
+library(kableExtra)
+library(gridExtra)
+# Load data from opendatatoronto
+
+package <- show_package("498d16dd-31cf-4d68-8ba5-a9df131accc6") %>% list_package_resources()
+package[1, ]
+
+col_desc <- get_resource(package[1, ])[[1]]
+table08 <- get_resource(package[1, ])[["RawDataRef-Period2008"]]
+table11 <- get_resource(package[1, ])[["RawDataRef_2011"]]
+head(table11)
+
+# Delete unwanted variables
+table11 <- table11 %>% select(-c("Neighbourhood Id", "Mid-Century Highrise Households", "Mid-Century Highrise Population"))
+
+# normalize home prices and mid-century highrise population
+
+table11$`Home Prices` <- (table11$`Home Prices` - mean(table11$`Home Prices`)) / sd(table11$`Home Prices`)
+
+# table11$`Mid-Century Highrise Population` <- (table11$`Mid-Century Highrise Population` - mean(table11$`Mid-Century Highrise Population`)) / sd(table11$`Mid-Century Highrise Population`)
+
+table11$`Social Housing Units` <- (table11$`Social Housing Units` - mean(table11$`Social Housing Units`)) / sd(table11$`Social Housing Units`)
+
+table11$`Percent Mid-Century Highrise Population` <- (table11$`Percent Mid-Century Highrise Population` - mean(table11$`Percent Mid-Century Highrise Population`)) / sd(table11$`Percent Mid-Century Highrise Population`)
+
+table11$`Rent Bank Applicants` <- (table11$`Rent Bank Applicants` - mean(table11$`Rent Bank Applicants`)) / sd(table11$`Rent Bank Applicants`)
+
+table11$`Social Housing Waiting List` <- (table11$`Social Housing Waiting List` - mean(table11$`Social Housing Waiting List`)) / sd(table11$`Social Housing Waiting List`)
+```
+
+# Introduction
+
+As Toronto's housing price continues to break new records, more and more people are unable to receive quality housing and maintain their quality of life [@crew]. Despite numerous government subsidiaries on affordable housing, many concerns arise as the government attempts to provide more social housing. These concerns show light on debates and opposing forces on social housing, and it may cause further disruption in the neighborhood. 
+
+This report focuses on this issue and provides a broad overview of the home price in each neighborhood and the social housing status in that neighborhood in hopes of showing correct and unbiased analysis that may alleviate the tension. This report utilizes the R Statistical Programming Language[@citeR], tidyverse package [@citetidyverse], and dplyr package [@dplyr] to produce analysis and knitr[@knitr] and bookdown[@citebookdown] to produce the report.
+
+Section 2.1 and 2.2 provides an introduction to data that is available to everyone provided by the City of Toronto. In section 2.3 showcases an analysis on the available variables and provides an explanation on the analysis.
+
+Section 3 and 4 finally describes the conclusion and future steps that should be taken to obtain a better understanding of this issue.
+
+
+
+# Data
+
+## Data Source
+
+This report utilizes the data from OpenDataToronto[@opendatatoronto], Wellbeing Toronto - Housing dataset[@opendata]. Wellbeing Toronto [@wellbeing] is a mapping application that transforms multiple data such as housing, youth service, transportation, etc, onto a map to help users visualize data. Its goal is to allow people to familiarize themselves with different neighborhoods as well as resource accessibility. 
+
+The data analyzed in this report is the "Housing" dataset from Wellbeing Toronto. It contains three separate sheets, "IndicatorMetaData", which shows the detailed description of each column and its abbreviation, "RawDataRef-Period2008", which contains the raw data of housing information of each neighborhood in Toronto in the period 2008, and "RawDataRef-2011", which contains the raw data of housing information of each neighborhood in Toronto in the period 2011. 
+
+## Data Methodology
+
+The data was obtained from multiple sources such as Toronto Community Housing Corporation, City of Toronto's Shelter, Support and Housing Administration, City of Toronto Affordable Housing Office and Statistics Canada, and the data for the average house price is obtained from Realosophy.com[@realosophy]. 
+
+Toronto Community Housing Corporation is a corporation owned by the municipal government that aims to create quality and vibrant homes and community for everyone. [@com_house] Their data on social housing comes directly from their list of owned housing in three different regional offices.
+
+City of Toronto's Shelter, Support and Housing Administration is a government division that acts as the service manager that provides housing and homelessness shelter for vulnerable people in Toronto.[@ssha] Their data comes directly from their housing list and waitlist information.
+
+City of Toronto Affordable Housing Office and Statistics Canada, which has been renamed to Housing Secretariat in 2019, delivers incentives and fundings in hopes of enhancing Toronto residents, communities, and neighborhoods.[@ahos]
+
+Realosophy.com is an independent, full-service real estate brokerage company that aims to provide better advising service Torontonians^[residents of Toronto] that focuses more on the consumer's benefit rather than making sales and managing transactions.[@realosophy]
+
+Please also note that the social housing data was collected from Housing Connections, and it has been renamed to Rent-Geared-to-Income Subsidy, under the City of Toronto's website.^[Housing COnnections website: https://www.toronto.ca/community-people/employment-social-support/housing-support/rent-geared-to-income-subsidy/]
+
+This report will be focusing on the table "RawDataRef-2011" as it contains data that is closer to our current time period, therefore making it more relevant. Furthermore, the data from 2008 period contains only 7 columns, 2 of which are Neighborhood name and ID, therefore it contains scarce data to analyze.
+
+## Data Characteristics
+
+There are a total of 14 columns in our dataset and there are a total of 140 observations available. However, please note that the "observation" in this context means each neighborhood as each neighborhood contains its own row of data.
+The dataset focuses on home prices, Mid-Century highrise buildings, and social housing, where the data defines "Mid-Century Highrise Buildings" as buildings built between 1945 to 1988 with 5 stories or higher.
+
+In this report, Mid-Century Highrise Households and Mid-Century Highrise Population variables are discarded and the Percentage of those variables are focused as percentage provides a more "normalized" variable that wont be affected by the difference in range of each variable.
+
+The columns and its description are: 
+
+* "Neighbourhood": The Neighborhood name,
+* "Neighbourhood Id": The ID that the neighborhood is assigned to,
+* "Home Prices", The average real estate price in that neighbourhood in 2011
+* "Percent Mid-Century Highrise Households": The percentage of households in that neighbourhood living in a Mid-Century Highrise building,
+* "Percent Mid-Century Highrise Population", The percentage of population in that neighbourhood living in a Mid-Century Highrise building,
+* "Rent Bank Applicants": The number of people who applied for assisstance on their rental arrears,
+* "Social Housing Turnover", From Housing Connections 2011 data, the turnover rate of each Housing Connections building addresses,
+* "Social Housing Units": The total social housing units obtained from Toronto Community Housing Corporation
+* "Social Housing Waiting List": The total number of people on the social housing waitlist according to Housing Connections.
+
+## Home Price Investigation
+
+This report will investigate the effects of other variables on Home Price, which is the average price of a real estate in that neighborhood. According to Canadian Real Estate Wealth, opposition of social housing may arise due to assumptions and stereotypes such as an increase in crime rate, strains on public infrastructure, and decrease in property value[@crew]. However, these are all just assumptions, and it would require further investigation in these subjects to determine whether or not these concerns are valid. By focusing on the home price and social infrastructures, it provides a more unbiased and clear conclusion to this question.
+
+The scattered plots of home price and some selected variables are shown below in Figure 1 and organized by gridExtra[@girdExtra]. Percent Mid-Century Highrise Household is not plotted as it is directly related to Percent Mid-Century Highrise Population. Social Housing Turnover rate is also not plotted as it also directly related to Social Housing Units and Social Housing Waiting List.
+
+Also, please keep note that the data has been normalized using z-score to prevent any large value that will affect the readability and interpretation of the plots.
+
+```{r warning=FALSE, fig.cap="Scattered Plot of Home Price vs other variables", message = FALSE, echo=FALSE}
+# home price vs mid century highrise population normalized
+t1 <- table11 %>% ggplot(aes(x=`Percent Mid-Century Highrise Population`, y=`Home Prices`)) + 
+  geom_point()+
+  geom_smooth(method='lm', color='blue')
+t2 <- table11 %>% ggplot(aes(x=`Rent Bank Applicants`, y=`Home Prices`)) + 
+  geom_point()+
+  geom_smooth(method='lm', color='blue')
+t3 <- table11 %>% ggplot(aes(x=`Social Housing Units`, y=`Home Prices`)) + 
+  geom_point()+
+  geom_smooth(method='lm', color='blue')
+t4 <- table11 %>% ggplot(aes(x=`Social Housing Waiting List`, y=`Home Prices`)) + 
+  geom_point()+
+  geom_smooth(method='lm', color='blue')
+grid.arrange(t1, t2, t3, t4, ncol=2, nrow=2)
+```
+
+From Figure 1 above, Home Price tends to show a negative relationship with all these variables. It may show that these variables are negatively correlated, but it is crucial to investigate more into each data point. From the scattered plot, there are a few noticeable points that have a relatively high Home Price while having a low value for the other variables. 
+
+Furthermore, from the correlation coefficient shown below in Table 1 created using ggcorrplot[@ggcorrplot] and kableExtra[@kableExtra], it shows that Home Prices has a negative correlation coefficient with other variables. In other words, as all of these other variables increase, home price decrease.
+
+
+```{r warning=FALSE, fig.cap="Correlation of Home Price with other variables", message = FALSE, echo=FALSE}
+table11_v <- table11%>%select(-`Neighbourhood`)
+corr <- round(cor(table11_v), 1)
+# head(corr)
+corr <- corr[1, ]
+as_tibble(cbind(nms = names(corr), t(corr)))%>%
+  select(-`Home Prices`)%>%
+  knitr::kable(col.names = c("",
+                             "Percent Mid-Century Highrise Households",
+                             "Percent Mid-Century Highrise Population",
+                             "Rent Bank Applicants",
+                             "Social Housing Turnover",
+                             "Social Housing Units",
+                             "Social Housing Waiting List"),
+               booktabs = TRUE,
+               escape = FALSE,
+               caption = "Correlation Coefficient of Home Price"
+  ) %>%
+  column_spec(1:7, width = "4em") %>%
+  kableExtra::kable_styling()
+```
+
+```{r warning=FALSE, message = FALSE, echo=FALSE, , include=FALSE}
+table11[which(table11$`Social Housing Units` < -0.5 & table11$`Home Prices` > 3 & table11$`Rent Bank Applicants` < -0.5), ]
+```
+
+These data points are the neighborhoods St.Andrew-Windfields, Bridle Path-Sunnybrook-York Mills, and Forest Hill South. These areas are often considered the "wealthiest" part of Toronto according to Toronto Star[@star], Narcity[@narcity], and Mortgage Intelligence[@mi5]. With this finding, it shows that some of the top wealthiest areas in Toronto do in fact have lesser Social Housing, which are affordable housing that are often subsidized by the government. 
+
+Although this finding may seem to be supporting the assumptions and claims mentioned previously, there are several important external factors and reasoning to consider before justifying these claims.
+
+# Conclusion and Weaknesses
+
+As mentioned earlier in this report, the data was referenced in 2011 and part of the data was obtained via third party corporations. This may decrease the credibility in the data as it may be outdated and the collection of data during that time may not be as accessible compared to nowadays. 
+
+Furthermore, the finding made in the previous section, where some wealthy areas have fewer social housing should not be a definitive conclusion for the assumptions of increase in crime rates and strains on public infrastructures as social housing increase due to numerous reasons as other wealthy areas such as Lawrence Park[@mi5] are also not shown in the data points listed above despite it also being one of the most wealthiest neighborhoods.
+
+Lastly, this report was not able to cover much of the aspects of social housing on home prices in terms of the change in time as only one period of time was referenced in the dataset. It also lacks other variables that would allow more detailed analysis such as identifying neighborhood type as suburban or farm land would further help the analysis by explaining the low social housing units. 
+
+As a result, this report shows solely the relationship between Home Price and social housing, it does not provide proof that social housing is the cause of decline in home prices. It is also not evidence that should be used to impose stereotypes on people who require social housing.
+
+# Next Steps
+
+More detailed data collection should be made to ensure a more wellrounded analysis on the affects of social housing on home price. Regression lines and time series data should also be introduced to observe the trend of each neighborhood over a certain period of time. 
+
+
+\newpage
+
+
+# References
+
+
