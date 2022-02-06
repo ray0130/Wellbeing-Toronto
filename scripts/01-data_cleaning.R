@@ -10,6 +10,14 @@
 
 # Set seed for reproducibility
 set.seed(1234)
+
+install.packages("tidyverse")
+install.packages("opendatatoronto")
+install.packages("dplyr")
+install.packages("ggcorrplot")
+install.packages("kableExtra")
+install.packages("gridExtra")
+
 library(tidyverse)
 library(opendatatoronto)
 library(dplyr)
@@ -18,10 +26,6 @@ library(kableExtra)
 library(gridExtra)
 # Load data from opendatatoronto
 
-# Main Limitation is only has 2011 data to consider
-# No continuous updates to reflect area development and detailed data
-
-# get data
 package <- show_package("498d16dd-31cf-4d68-8ba5-a9df131accc6") %>% list_package_resources()
 package[1, ]
 
@@ -36,8 +40,6 @@ table11 <- table11 %>% select(-c("Neighbourhood Id", "Mid-Century Highrise House
 # normalize home prices and mid-century highrise population
 
 table11$`Home Prices` <- (table11$`Home Prices` - mean(table11$`Home Prices`)) / sd(table11$`Home Prices`)
-
-# table11$`Mid-Century Highrise Population` <- (table11$`Mid-Century Highrise Population` - mean(table11$`Mid-Century Highrise Population`)) / sd(table11$`Mid-Century Highrise Population`)
 
 table11$`Social Housing Units` <- (table11$`Social Housing Units` - mean(table11$`Social Housing Units`)) / sd(table11$`Social Housing Units`)
 
